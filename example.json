@@ -1,0 +1,89 @@
+{
+  "kind": "List",
+  "apiVersoin": "v1",
+  "metadata": {},
+  "items": [
+    {
+      "kind": "Pod",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "oc-proxy-tester",
+        "labels": {
+          "name": "oc-proxy-tester",
+          "app": "oc-proxy-tester"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "oc-proxy",
+            "image": "docker.io/radanalyticsio/oc-proxy",
+            "imagePullPolicy": "IfNotPresent",
+            "args": [
+              "proxy",
+              "-p",
+              "8001",
+              "--address=0.0.0.0",
+              "--disable-filter=true",
+              "--api-prefix=/proxy"
+            ],
+            "ports": [
+              {
+                "name": "oc-proxy-port",
+                "containerPort": 8001,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "test-volume",
+            "emptyDir": {}
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "oc-proxy-service",
+        "labels": {
+          "name": "oc-proxy-service"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "oc-proxy-port",
+            "protocol": "TCP",
+            "port": 8001,
+            "targetPort": 8001
+          }
+        ],
+        "selector": {
+          "app": "oc-proxy-tester"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Route",
+      "metadata": {
+        "name": "oc-proxy-service"
+      },
+      "spec": {
+        "port": {
+          "targetPort": "oc-proxy-port"
+        },
+        "to": {
+          "kind": "Service",
+          "name": "oc-proxy-service",
+          "weight": 100
+        },
+        "wildcardPolicy": "None"
+      }
+    }
+  ]
+}
